@@ -1,0 +1,9 @@
+pymupdf
+python-docx
+fastembed
+lancedb
+rank_bm25
+pydantic>=2.0
+pyyaml
+streamlit
+pytest

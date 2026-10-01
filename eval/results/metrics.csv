@@ -1,0 +1,4 @@
+mode,R@1,R@3,R@5,MRR
+hierarchical+dense,0.6666666666666666,1.0,1.0,0.8055555555555555
+hierarchical+hybrid,1.0,1.0,1.0,1.0
+naive+dense,0.0,0.0,0.0,0.0

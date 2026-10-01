@@ -1,0 +1,25 @@
+paths:
+  data_dir: data
+  models_dir: models
+parsing:
+  min_headings_for_structure: 3
+  drop_repeating_headers: true
+embedding:
+  model: BAAI/bge-small-en-v1.5
+  batch_size: 32
+  max_tokens: 512
+retrieval:
+  n_bm25: 20
+  n_dense: 20
+  top_k: 5
+  fusion: rrf
+  rrf_k: 60
+  use_summary_boost: false
+context:
+  max_tokens: 3000
+  max_xrefs_per_hit: 2
+baseline:
+  chunk_tokens: 512
+  overlap: 64
+llm:
+  backend: "null"
