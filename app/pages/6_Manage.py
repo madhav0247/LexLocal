@@ -9,22 +9,41 @@ from src.indexing.bm25_index import build_bm25, get_bm25_path
 from src.storage.trees import load_tree
 from src.audit.logger import log_event
 
-st.title("Manage Documents (Admin)")
-st.markdown("Create, Read, Update, and Delete documents from the system.")
+st.markdown("""
+<div class="lex-hero">
+    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+        <span class="lex-badge lex-badge-indigo">Administration</span>
+        <span class="lex-badge lex-badge-emerald">Document Lifecycle</span>
+    </div>
+    <div style="font-size: 1.85rem; font-weight: 800; color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -0.02em;">
+        Manage Document Repository
+    </div>
+    <div style="color: #94a3b8; font-size: 0.95rem; margin-top: 0.5rem; max-width: 760px; line-height: 1.5;">
+        Audit, inspect, and safely remove indexed documents from vector tables, structural tree stores, and inverted token indexes.
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 trees_dir = os.path.join(settings.paths.data_dir, "trees")
 if not os.path.exists(trees_dir):
     st.info("No documents have been ingested yet.")
     st.stop()
 
-# READ
 files = [f for f in os.listdir(trees_dir) if f.endswith('.json')]
 if not files:
-    st.info("No documents currently in the system.")
+    st.info("No documents currently stored in the system.")
     st.stop()
 
-st.subheader("Ingested Documents")
 doc_ids = [f.replace(".json", "") for f in files]
+
+st.markdown(f"""
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <div style="font-size: 1.1rem; font-weight: 700; color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif;">
+        Active Ingested Documents
+    </div>
+    <span class="lex-badge lex-badge-emerald">{len(doc_ids)} Registered</span>
+</div>
+""", unsafe_allow_html=True)
 
 for doc_id in doc_ids:
     with st.expander(f"Document: {doc_id}"):
@@ -32,15 +51,24 @@ for doc_id in doc_ids:
         with col1:
             try:
                 nodes = load_tree(doc_id)
-                st.write(f"**Total Clauses:** {len(nodes)}")
                 roots = [n.heading or n.label for n in nodes if n.level == 0]
-                st.write(f"**Root Elements:** {roots[:3]}..." if len(roots) > 3 else f"**Root Elements:** {roots}")
+                root_preview = ", ".join(roots[:3]) + ("..." if len(roots) > 3 else "")
+                
+                st.markdown(f"""
+                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+                    <span class="lex-badge lex-badge-indigo">{doc_id}</span>
+                    <span class="lex-badge lex-badge-sky">{len(nodes)} Clauses</span>
+                </div>
+                <div style="font-size: 0.84rem; color: #94a3b8; margin-top: 0.25rem;">
+                    <strong>Root Elements:</strong> {root_preview if root_preview else 'None'}
+                </div>
+                """, unsafe_allow_html=True)
             except Exception as e:
-                st.write("**Total Clauses:** Error loading")
+                st.markdown(f"<div style='color: #f87171;'>Error loading tree: {e}</div>", unsafe_allow_html=True)
                 
         with col2:
-            if st.button("Delete Document", key=f"del_{doc_id}"):
-                with st.spinner("Deleting..."):
+            if st.button("Delete Document", key=f"del_{doc_id}", use_container_width=True):
+                with st.spinner("Purging vectors, tree, and rebuilding BM25 index..."):
                     db = get_db()
                     if "clauses" in db.table_names():
                         table = db.open_table("clauses")
@@ -67,9 +95,16 @@ for doc_id in doc_ids:
                             os.remove(bm25_path)
                             
                     log_event("delete", {"doc_id": doc_id})
-                    st.success(f"Deleted {doc_id}")
+                    st.success(f"Purged document '{doc_id}'.")
                     st.rerun()
 
-st.divider()
-st.subheader("Update / Re-ingest")
-st.markdown("To **Update** a document, simply go to the **Ingest** page and upload it again with the same Document ID. The system will automatically overwrite the old vectors and rebuild the tree.")
+st.markdown("""
+<div class="lex-card" style="margin-top: 1.5rem;">
+    <div style="font-size: 1.05rem; font-weight: 700; color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; margin-bottom: 0.5rem;">
+        Updating Existing Documents
+    </div>
+    <div style="color: #94a3b8; font-size: 0.88rem; line-height: 1.5;">
+        To overwrite or re-index a document with a newer revision, simply navigate to the <strong>Ingest</strong> page and upload the file with the same <strong>Document Identifier</strong>. The pipeline will automatically overwrite existing vector embeddings and rebuild the structural tree.
+    </div>
+</div>
+""", unsafe_allow_html=True)

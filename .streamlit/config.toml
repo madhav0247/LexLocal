@@ -7,4 +7,4 @@ font="sans serif"
 
 [client]
 showErrorDetails = false
-toolbarMode = "minimal"
+toolbarMode = "viewer"
